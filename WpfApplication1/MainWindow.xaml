@@ -1,0 +1,31 @@
+﻿<Window x:Class="WpfApplication1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Granicus Uploader" Height="541" Width="778">
+    
+  <Grid>
+    <Menu Height="20" VerticalAlignment="Top" Width="770" IsMainMenu="True">
+      <MenuItem Header="_File">
+        <MenuItem Click="Login_MenuItem_Click"  Header="_Login">
+          <MenuItem.Icon>
+            <Image Source="Images/glyphicons-526-user-key.png" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+    </Menu>
+    <ListView x:Name="FolderListView" ItemsSource="{Binding}" HorizontalAlignment="Left" Height="475" Margin="10,25,0,0" VerticalAlignment="Top" Width="227" SelectionChanged="FolderListView_SelectionChanged">
+
+      <ListView.View>
+        <GridView>
+          <GridViewColumn DisplayMemberBinding="{Binding Name}"/>
+        </GridView>
+      </ListView.View>
+    </ListView>
+    <TextBlock Drop="dragdropText_Drop" MouseLeftButtonUp="dragdropText_MouseLeftButtonUp" AllowDrop="True" Name="dragdropText" Visibility="Hidden" Margin="242,25,0,0" TextWrapping="Wrap" TextAlignment="Center" Text="Drag and drop your files or click here to upload to {FolderName}." VerticalAlignment="Center" FontSize="18" FontStyle="Italic" />
+    <TextBlock Name="selectFolderText" Visibility="Hidden" Margin="242,25,0,0" TextWrapping="Wrap" TextAlignment="Center" Text="Select a folder on the left that you'd like to upload to." VerticalAlignment="Center" FontSize="18" FontStyle="Italic" />
+    <TextBlock Name="loginText" Margin="242,25,0,0" TextWrapping="Wrap" TextAlignment="Center" Text="Login from the file menu to begin." VerticalAlignment="Center" FontSize="18" FontStyle="Italic" />
+    <ProgressBar x:Name="uploadProgressBar" HorizontalAlignment="Left" Height="10" Margin="278,490,0,0" VerticalAlignment="Top" Width="461"/>
+    <Label x:Name="statusLabel" Content="Idle..." HorizontalAlignment="Left" Margin="278,459,0,0" VerticalAlignment="Top" Width="461"/>
+
+  </Grid>
+</Window>
