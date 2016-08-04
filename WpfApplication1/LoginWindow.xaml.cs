@@ -11,6 +11,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Granicus.MediaManager.SDK;
+using System.Configuration;
+using System.Diagnostics;
+using System.Windows.Navigation;
 
 namespace WpfApplication1
 {
@@ -19,6 +22,8 @@ namespace WpfApplication1
   /// </summary>
   public partial class LoginWindow : Window
   {
+        private string _host = "";
+
     public LoginWindow()
     {
       InitializeComponent();
@@ -34,9 +39,46 @@ namespace WpfApplication1
       DialogResult = true;
     }
 
-    public string Host
+        private void ComboBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            var comboBox = sender as ComboBox;
+
+            // set the list of domains from the app config file
+            try
+            {
+                var appSettings = ConfigurationManager.AppSettings;
+                string domains = appSettings["domains"];
+
+                if (domains == null)
+                {
+                    domains = "www.granicus.com";
+                }
+                List<string> listDomains = new List<string>();
+                listDomains.AddRange(domains.Split(','));
+                comboBox.ItemsSource = listDomains;
+            }
+            catch
+            {
+                comboBox.ItemsSource = new List<string>() { "www.granicus.com" };
+            }
+
+            comboBox.SelectedIndex = 0;
+            _host = comboBox.SelectedItem as string;
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // ... Get the ComboBox.
+            var comboBox = sender as ComboBox;
+
+            // ... Set SelectedItem as Window Title.
+            _host = comboBox.SelectedItem as string;
+        }
+
+
+        public string Host
     {
-      get { return this.txtHost.Text; }
+      get { return _host; }
     }
 
     public string Login
@@ -49,5 +91,11 @@ namespace WpfApplication1
       get { return this.txtPassword.Password; }
     }
 
-  }
+        public void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("http://" + _host));
+            e.Handled = true;
+        }
+
+    }
 }

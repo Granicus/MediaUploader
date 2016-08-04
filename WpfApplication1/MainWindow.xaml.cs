@@ -17,18 +17,21 @@ using System.Windows.Threading;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace WpfApplication1
 {
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window
-  {
+  public partial class MainWindow : Window, INotifyPropertyChanged
+    {
     public MediaManager mema = new MediaManager();
     private bool Connected = false;
-    private string DragDropTextTemplate = "Drag and drop your files here to upload to {FolderName}.";
-    private FolderData selectedFolder;
+    private readonly string DRAG_DROP_TEMPLATE = "\n\n\n\n\n\n\n\nDrag and drop your files here to upload to {FolderName}.";
+    private FolderData _selectedFolder;
+        public event PropertyChangedEventHandler PropertyChanged;
+
 
     private long currentPosition;
     private int defaultChunkSize = 1024 * 1024;
@@ -47,7 +50,28 @@ namespace WpfApplication1
       transcodeFileBackgroundWorker.DoWork += transcodeFileBackgroundWorker_DoWork;
       transcodeFileBackgroundWorker.RunWorkerCompleted += transcodeFileBackgroundWorker_RunWorkerCompleted;
       transcodeFileBackgroundWorker.ProgressChanged += transcodeFileBackgroundWorker_ProgressChanged;
-    }
+
+            this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
+
+            // bind the drag drop text property in this class
+            Binding binding = new Binding("DragDropText");
+            binding.Source = this;
+            dragdropText.SetBinding(TextBlock.TextProperty, binding);
+        }
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(name));
+            }
+        }
+
+        void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            ShowLogin();
+        }
 
     void transcodeFileBackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
     {
@@ -68,9 +92,18 @@ namespace WpfApplication1
 
     void uploadFileBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
     {
-      dragdropText.Visibility = System.Windows.Visibility.Visible;
-      FolderListView.IsEnabled = true;
-      statusLabel.Content = "Upload Complete";
+            if (e.Error != null)
+            {
+                MessageBox.Show("Error uploading file: " + e.Error.Message);
+                statusLabel.Content = "Error while uploading.";
+            }
+            else
+            {
+                statusLabel.Content = "Upload Complete";
+                //clipLinksText.visibility = System.Windows.Visibility.Visible;
+            }
+            dragdropText.Visibility = System.Windows.Visibility.Visible;
+            FolderListView.IsEnabled = true;
     }
 
     void transcodeFileBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -79,7 +112,7 @@ namespace WpfApplication1
       string[] outputs = new string[files.Length];
       for (var i = 0; i < files.Length; i++ )
       {
-        setStatusLabel("Transcoding: " + Path.GetFileName(files[i]) + "...");
+        setStatusLabel(string.Format("{0}/{1} Transcoding: {2}", i, files.Length, Path.GetFileName(files[i]) + "..."));
         switch (System.IO.Path.GetExtension(files[i]).ToLower())
         {
           case ".mp4":
@@ -222,40 +255,80 @@ namespace WpfApplication1
       return temp_file;
     }
 
-    private void Login_MenuItem_Click(object sender, RoutedEventArgs e)
-    {
-      while(!Connected)
-      {
-        try
+        private void SetWindowCoordsCenter(Window child, Window parent)
         {
-          LoginWindow loginDialog = new LoginWindow();
-          if (loginDialog.ShowDialog() == true)
-          {
-            mema.Connect(loginDialog.Host, loginDialog.Login, loginDialog.Password);
-            Connected = true;
-            loginText.Visibility = System.Windows.Visibility.Hidden;
-            selectFolderText.Visibility = System.Windows.Visibility.Visible;
-            List<FolderData> folders = mema.GetFolders().ToList<FolderData>();
-            FolderListView.ItemsSource = folders;
-          }
-          else
-          {
-            break;
-          }
-        } 
-        catch(System.Web.Services.Protocols.SoapException soapEx)
-        {
-          MessageBox.Show(soapEx.Message);
+            // center the login window ontop of the main window (note using actualheight for parent window since it
+            // is likely rendered but using the requested height for child since its likely not yet rendered)
+            child.Left = parent.Left + (parent.ActualWidth - child.Width) / 2;
+            child.Top = parent.Top + (parent.ActualHeight - child.Height) / 2;
         }
-      }
-    }
 
+        private void ShowLogin()
+        {
+            while (!Connected)
+            {
+                try
+                {
+                    LoginWindow loginDialog = new LoginWindow();
+                    SetWindowCoordsCenter(loginDialog, Application.Current.MainWindow);
+
+                    if (loginDialog.ShowDialog() == true)
+                    {
+                        mema.Connect(loginDialog.Host, loginDialog.Login, loginDialog.Password);
+                        Connected = true;
+                        loginText.Visibility = System.Windows.Visibility.Hidden;
+                        selectFolderText.Visibility = System.Windows.Visibility.Visible;
+                        List<FolderData> folders = mema.GetFolders().ToList<FolderData>();
+                        FolderListView.ItemsSource = folders;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                catch (System.Web.Services.Protocols.SoapException soapEx)
+                {
+                    MessageBox.Show(soapEx.Message);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Unable to login. Please verify the host, username, and password are correct.");
+                }
+            }
+
+            // user closed the login dialog, close down the app since theres currently no features
+            // to use without authenticated user
+            if (!Connected)
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
+        private void Login_MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            ShowLogin();
+        }
+
+        private string _dragdroptext = "";
+        public string DragDropText
+        {
+            get
+            {
+                return _dragdroptext;
+            }
+            set
+            {
+                _dragdroptext = value;
+                PropertyChanged(this, new PropertyChangedEventArgs("DragDropText"));
+            }
+            
+        }
     private void FolderListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-      selectedFolder = (FolderData)FolderListView.SelectedItem;
-      dragdropText.Text = DragDropTextTemplate.Replace("{FolderName}", selectedFolder.Name);
-      dragdropText.Visibility = System.Windows.Visibility.Visible;
-      selectFolderText.Visibility = System.Windows.Visibility.Hidden;
+            _selectedFolder = (FolderData)FolderListView.SelectedItem;
+            DragDropText =  DRAG_DROP_TEMPLATE.Replace("{FolderName}", _selectedFolder.Name);
+            dragdropText.Visibility = System.Windows.Visibility.Visible;
+            selectFolderText.Visibility = System.Windows.Visibility.Hidden;
     }
 
     private void dragdropText_Drop(object sender, DragEventArgs e)
@@ -268,15 +341,16 @@ namespace WpfApplication1
         transcodeFileBackgroundWorker.RunWorkerAsync(files);
       }
     }
-
+        
     private void uploadFileBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
     {
       string[] files = (string[])e.Argument;
-      var mediaVault = mema.GetMediaVault(selectedFolder.ID);
+      var mediaVault = mema.GetMediaVault(_selectedFolder.ID);
 
-      foreach (string file in files)
+      for(int i=0; i<files.Length; i++)
       {
-        setStatusLabel("Uploading: " + Path.GetFileName(file) + "...");
+        var file = files[i];
+        setStatusLabel(string.Format("{0}/{1} Uploading: {2}", i, files.Length, Path.GetFileName(file) + "..."));
         FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
         BinaryReader reader = new BinaryReader(fs);
         long size = new FileInfo(file).Length;
@@ -327,7 +401,7 @@ namespace WpfApplication1
         // the entire file transferred, so register it with MediaManager and move on to the next file
         mediaVault.FinishUpload(currentBucket);
         string extension = new FileInfo(file).Extension.Substring(1);
-        mediaVault.RegisterUploadedFile(currentBucket, selectedFolder.ID, currentFile.TrimEnd(("." + extension).ToCharArray()), extension);
+        mediaVault.RegisterUploadedFile(currentBucket, _selectedFolder.ID, currentFile.TrimEnd(("." + extension).ToCharArray()), extension);
         // delete the uploaded file (we've already moved it to a temp folder)
         //File.Delete(file);
       }
