@@ -1,7 +1,9 @@
 ﻿<Window x:Class="WpfApplication1.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Login" Height="175.443" Width="388.95" ResizeMode="NoResize">
+        Title="Login" Height="175.443" Width="388.95" 
+        ResizeMode="NoResize"
+        Icon="./Images/logo_g.ico">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="100" />

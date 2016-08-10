@@ -1,0 +1,13 @@
+﻿<Window x:Class="GranicusMediaUploader.Results"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GranicusMediaUploader"
+        mc:Ignorable="d"
+        Title="Upload Results" Height="300" Width="800" ResizeMode="NoResize"
+        Name="ResultsWindow"  Icon="./Images/logo_g.ico">
+    <Grid HorizontalAlignment="Left" Width="629">
+        <TextBox x:Name="resultsText" Height="233" Margin="10,10,-137,0" ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" HorizontalAlignment="Center" Width="756" IsReadOnly="True"/>
+    </Grid>
+</Window>
