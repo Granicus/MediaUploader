@@ -19,8 +19,6 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Net;
-using Newtonsoft.Json;
-using GranicusMediaUploader.json;
 using GranicusMediaUploader;
 
 namespace WpfApplication1
@@ -146,22 +144,26 @@ namespace WpfApplication1
             else
             {
                 UploadData data = (UploadData)e.Result;
-                statusLabel.Content = "Upload Complete.";
-                //clipLinksText.visibility = System.Windows.Visibility.Visible;
                 string results = "";
-
+                int errCount = 0;
+                int uploadCount = 0;
                 foreach (MediaData media in data.MediaData)
                 {
                     results += string.Format("File: {0}\r\n", media.InputFileName);
                     if (media.Exception != null)
                     {
+                        errCount++;
                         results += string.Format("Error: {0}\r\n\r\n", media.Exception.Message);
                     }
                     else
                     {
+                        uploadCount++;
                         results += string.Format("Url: {0}\r\nPublishingPoint: {1}\r\n\r\n", media.Url, media.PublishPointUrl);
                     }
                 }
+
+                statusLabel.Content = string.Format("Done uploading {0}/{1} files with {2} errors.", uploadCount, data.MediaData.Count,errCount);
+
                 Results resultsWindow = new Results();
                 resultsWindow.Text = results;
                 resultsWindow.ShowDialog();
@@ -178,23 +180,32 @@ namespace WpfApplication1
                 try
                 {
                     setStatusLabel(string.Format("{0}/{1} Transcoding: {2}", i, data.MediaData.Count, Path.GetFileName(data.MediaData[i].InputFile) + "..."));
-                    switch (System.IO.Path.GetExtension(data.MediaData[i].InputFile).ToLower())
+
+                    if (!File.Exists(data.MediaData[i].InputFile))
+                    {
+                        throw new Exception(string.Format("Unable to locate file {0}", data.MediaData[i].InputFile));
+                    }
+
+                    string ext = System.IO.Path.GetExtension(data.MediaData[i].InputFile).ToLower();
+                    switch (ext)
                     {
                         case ".mp4":
                             data.MediaData[i].OutputFile = Copy(data.MediaData[i].InputFile);
                             break;
                         case ".mp3":
                         case ".wma":
+                        case ".aac":
+                        case ".wav":
                             data.MediaData[i].OutputFile = TranscodeAudio(data.MediaData[i].InputFile);
                             break;
                         default:
-                            data.MediaData[i].OutputFile = TranscodeVideo(data.MediaData[i].InputFile);
-                            break;
+                            //data.MediaData[i].OutputFile = TranscodeVideo(data.MediaData[i].InputFile);
+                            throw new Exception(string.Format("Unsupported file format '{0}'", ext));
                     }
 
                     if (!File.Exists(data.MediaData[i].OutputFile))
                     {
-                        throw new Exception(string.Format("Unable to transcode file '{0}' to output '{1}'. Please verify it is a valid audio file.", data.MediaData[i].InputFileName, data.MediaData[i].OutputFile));
+                        throw new Exception(string.Format("Unable to transcode file '{0}' to output '{1}'. Please verify it is a valid audio file.", data.MediaData[i].InputFile, data.MediaData[i].OutputFile));
                     }
                 }
                 catch(Exception ex)
@@ -431,48 +442,6 @@ namespace WpfApplication1
             FolderListView.IsEnabled = false;
             transcodeFileBackgroundWorker.RunWorkerAsync(data);
         }
-        private void publishClip(MediaData media, string host, FolderData folder)
-        {
-            string url =  "http://" + host + "/api/clips/v1/publish";
-            WebRequest request = WebRequest.Create(url);
-
-            ((HttpWebRequest)request).UserAgent = "Granicus Media Uploader Agent";
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            ((HttpWebRequest)request).CookieContainer = new CookieContainer();
-
-            foreach (Cookie c in mema.CookieContainer.GetCookies(new Uri(mema.Url)))
-            {
-                ((HttpWebRequest)request).CookieContainer.Add(c);
-            }
-
-            // add debug cookie if local
-            if (mema.Url.Contains("mm.lvh.me"))
-            {
-                ((HttpWebRequest)request).CookieContainer.Add(new Cookie("XDEBUG_SESSION", "XDEBUG_ECLIPSE"));
-            }
-
-            using (var streamWriter = new StreamWriter(request.GetRequestStream()))
-            {
-                PublishRequestData reqData = new PublishRequestData();
-                reqData.clip_id = media.ClipId.ToString();
-                reqData.name = string.Format("Publish Point For {0}", media.ClipName);
-                string json = JsonConvert.SerializeObject(reqData);
-                streamWriter.Write(json);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-            using (var reader = new StreamReader(response.GetResponseStream()))
-            {
-                string resp = reader.ReadToEnd();
-                PublishResponseData respData = JsonConvert.DeserializeObject<PublishResponseData>(resp);
-                media.PublishPointUrl = respData.publish_point;
-                media.Url = respData.url;
-            }
-        }
 
         private void uploadFileBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -557,19 +526,25 @@ namespace WpfApplication1
                         // delete the uploaded file (we've already moved it to a temp folder)
                         //File.Delete(file); 
 
-                        PublishClipData publishdata = new PublishClipData(
-                            data.MediaData[i].ClipId,
-                            true,
-                            "Publishing Point For " + data.MediaData[i].ClipName,
-                            "Publishing Point For " + data.MediaData[i].ClipName,
-                            "Publishing Point For " + data.MediaData[i].ClipName,
-                            -1,
-                            -1);
-                        setStatusLabel(string.Format("{0}/{1} Publishing: {2}", i, data.MediaData.Count, Path.GetFileName(file) + "..."));
-                        PublishClipResult result = mema.PublishClip(publishdata);
-                        data.MediaData[i].Url = result.URL;
-                        data.MediaData[i].PublishPointUrl = result.PublishPoint;
-                        //this.publishClip(data.MediaData[i], data.Domain, data.RemoteFolder);
+                        try
+                        {
+                            PublishClipData publishdata = new PublishClipData(
+                                data.MediaData[i].ClipId,
+                                true,
+                                "Publishing Point For " + data.MediaData[i].ClipName,
+                                "Publishing Point For " + data.MediaData[i].ClipName,
+                                "Publishing Point For " + data.MediaData[i].ClipName,
+                                -1,
+                                -1);
+                            setStatusLabel(string.Format("{0}/{1} Publishing: {2}", i, data.MediaData.Count, Path.GetFileName(file) + "..."));
+                            PublishClipResult result = mema.PublishClip(publishdata);
+                            data.MediaData[i].Url = result.URL;
+                            data.MediaData[i].PublishPointUrl = result.PublishPoint;
+                        }
+                        catch (Exception innerEx)
+                        {
+                            throw new Exception(string.Format("File uploaded but unable to publish due to server error. You may log into {0} and manually publish file. Server error: '{1}'", data.Domain, innerEx.Message));
+                        }
                     }
                     catch (Exception ex)
                     {

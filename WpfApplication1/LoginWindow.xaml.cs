@@ -54,7 +54,11 @@ namespace WpfApplication1
                     domains = "www.granicus.com";
                 }
                 List<string> listDomains = new List<string>();
-                listDomains.AddRange(domains.Split(','));
+                string[] arrDomains = domains.Split(',');
+                foreach (string d in arrDomains)
+                {
+                    listDomains.Add(d.Trim());
+                }
                 comboBox.ItemsSource = listDomains;
             }
             catch

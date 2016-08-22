@@ -71,10 +71,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\Granicus.MediaManager.SDK.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
@@ -111,8 +107,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="json\PublishRequestData.cs" />
-    <Compile Include="json\PublishResponseData.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
@@ -150,10 +144,6 @@
     </None>
     <None Include="..\list.exclude">
       <Link>list.exclude</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="..\StartGranicusMediaManager.bat">
-      <Link>StartGranicusMediaManager.bat</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="App.config">
@@ -208,8 +198,7 @@
 rmdir /s /q dist
 mkdir dist
 mkdir dist\GranicusMediaUploader
-xcopy /f /exclude:list.exclude . dist\GranicusMediaUploader\
-xcopy /f *.bat dist\</PostBuildEvent>
+xcopy /f /exclude:list.exclude . dist\GranicusMediaUploader\</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
