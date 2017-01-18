@@ -198,8 +198,12 @@ namespace WpfApplication1
                         case ".wav":
                             data.MediaData[i].OutputFile = TranscodeAudio(data.MediaData[i].InputFile);
                             break;
+
+                        case ".wmv":
+                            data.MediaData[i].OutputFile = TranscodeVideo(data.MediaData[i].InputFile);
+                            break;
+
                         default:
-                            //data.MediaData[i].OutputFile = TranscodeVideo(data.MediaData[i].InputFile);
                             throw new Exception(string.Format("Unsupported file format '{0}'", ext));
                     }
 
