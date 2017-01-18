@@ -75,7 +75,7 @@
       <Zip ZipFile="$(OutputProductZip)" 
             Actions="
                 AddFiles: $(OutputDirectory)\version.xml;
-                AddFolderContents: WpfApplication1\$(BinPlatformConfiguration)\dist;
+                AddFiles: WpfApplication1\$(BinPlatformConfiguration)\dist\GranicusMediaUploader\*;
                 "
         />
 
