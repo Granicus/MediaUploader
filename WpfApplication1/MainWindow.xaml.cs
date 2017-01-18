@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,15 +16,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using Granicus.MediaManager.SDK;
-using System.IO;
-using System.Threading;
 using System.Windows.Threading;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.ComponentModel;
-using System.Net;
+
+using Granicus.MediaManager.SDK;
 using GranicusMediaUploader;
 
 namespace WpfApplication1
@@ -381,7 +381,7 @@ namespace WpfApplication1
                 {
                     MessageBox.Show(soapEx.Message);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     MessageBox.Show("Unable to login. Please verify the host, username, and password are correct.");
                 }
