@@ -52,7 +52,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>878AC88B0422DC999E6F2DE4490A89226CA3DCE9</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8EDFB7AC298B127C7AD3C37399D7B3B8FE78E928</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>GranicusMediaUploader_TemporaryKey.pfx</ManifestKeyFile>
