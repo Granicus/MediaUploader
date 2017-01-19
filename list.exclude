@@ -1,3 +1,5 @@
 .pdb\
 .bat\
+.vshost.exe\
+.vshost.exe.config\
 .exclude\
