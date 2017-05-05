@@ -200,6 +200,7 @@ namespace WpfApplication1
                             break;
 
                         case ".wmv":
+                        case ".mov":
                             data.MediaData[i].OutputFile = TranscodeVideo(data.MediaData[i].InputFile);
                             break;
 
