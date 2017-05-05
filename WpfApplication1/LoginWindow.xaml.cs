@@ -97,7 +97,7 @@ namespace WpfApplication1
 
         public void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            Process.Start(new ProcessStartInfo(string.Format("http://{0}/account/forgotpassword", _host)));
+            Process.Start(new ProcessStartInfo(string.Format("https://{0}/account/forgotpassword", _host)));
             e.Handled = true;
         }
 
